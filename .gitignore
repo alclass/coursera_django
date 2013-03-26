@@ -1,0 +1,15 @@
+local_settings.py
+*.log
+*/*.log
+*.mwb
+*.pdf
+*/*.pdf
+.project
+*.pyc
+*/*.pyc
+.pydevproject
+.settings
+*.sqlite
+*/*.sqlite
+*~
+*/*~

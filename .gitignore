@@ -1,4 +1,6 @@
 local_settings.py
+*.html
+*.json.dat
 *.log
 */*.log
 *.mwb

@@ -1,5 +1,13 @@
 # Django settings for coursera_django project.
 
+import os
+this_file_path = os.path.abspath(__file__)
+THIS_DIR_PATH, filename = os.path.split(this_file_path)
+try:
+  PARENT_DIR_PATH = '/'.join(THIS_DIR_PATH.split('/')[:-1])
+except IndexError:
+  PARENT_DIR_PATH = THIS_DIR_PATH
+
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
@@ -9,16 +17,23 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
-DATABASES = {
+try:
+  import local_settings
+  DATABASES = local_settings.DATABASES
+except ImportError:
+  # when the deployment is done by git alone...
+  # Planning to the Red Hat Cloud
+  DATABASES = MYSQL_DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': '/home/dados/Sw3/SwDv/CompLang SwDv/Python SwDv/Django SwDv/coursera_django/coursera_app_data/coursera_django.sqlite',                      # Or path to database file if using sqlite3.
-        'USER': '',                      # Not used with sqlite3.
-        'PASSWORD': '',                  # Not used with sqlite3.
+        'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
+        'NAME': 'courseradb',
+        'USER': 'mondesol_webuser',      # Not used with sqlite3.
+        'PASSWORD': 'webpass',           # Not used with sqlite3.
         'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
         'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
-    }
+  }
 }
+
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name

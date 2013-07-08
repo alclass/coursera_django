@@ -16,14 +16,23 @@ from coursera_mod import CourseraCourse
 
 class CourseraItemsReadSourceUnknown(ValueError):
   pass
+import os
 
+this_file_path = os.path.abspath(__file__)
+THIS_DIR_PATH, filename = os.path.split(this_file_path)
+try:
+  PARENT_DIR_PATH = '/'.join(THIS_DIR_PATH.split('/')[:-1])
+except IndexError:
+  PARENT_DIR_PATH = THIS_DIR_PATH
+
+import local_settings as ls
 
 class CourseraRootCourseGrabber(object):
 
   re_text_to_find = 'class[.]coursera[.]org/(\w+)[-](\d+)/auth/' # auth_redirector?type=login&subtype=normallecture_id=(\w+)'
   re_compiled_text_to_find = re.compile(re_text_to_find) 
 
-  DEFAULT_COURSERA_ITEMS_WEBROOT_HTML_FILENAME = 'Coursera Courses Webroot.html'  
+  DEFAULT_COURSERA_ITEMS_WEBROOT_HTML_FILENAME = ls.get_default_coursera_stocked_root_webpage_osfilepath()  
   DEFAULT_COURSERA_ITEMS_TXT_FILENAME          = 'Coursera Items.txt' 
   DEFAULT_COURSERA_ITEMS_JSON_FILENAME         = 'Coursera Items.json' 
 

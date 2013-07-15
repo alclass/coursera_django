@@ -21,7 +21,6 @@ class Course(models.Model):
   instructors  = models.ManyToManyField(Instructor)
   university   = models.ForeignKey(Institution)
   
-  
   def return_course_id_plus_course_n_seq_dict(self):
     return {'course_id':self.course_id, 'course_n_seq':self.course_n_seq} 
 

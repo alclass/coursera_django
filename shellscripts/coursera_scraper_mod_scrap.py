@@ -6,14 +6,7 @@ Created on 27/06/2013
 @author: friend
 '''
 
-import time
-import logging
-LOG_FILENAME = 'zlog-coursera_scrap-%s.log' %time.time()
-logging.basicConfig(filename=LOG_FILENAME,level=logging.INFO)
-
-from coursera_grabber_mod import CourseraRootCourseGrabber
-
-import os #, sys
+import os, sys
 this_file_path = os.path.abspath(__file__)
 THIS_DIR_PATH, filename = os.path.split(this_file_path)
 try:
@@ -23,10 +16,9 @@ except IndexError:
 
 import local_settings as ls
 
-
 os.environ['DJANGO_SETTINGS_MODULE'] = 'coursera_django.settings' # 'PBCodeInspectorStats.settings'
 #import coursera_django.settings as settings
-from coursera_app.models import Course, Institution  
+from coursera_app.models import Course # Inst  
 
 htmltrunk = '''
 <head>
@@ -123,20 +115,16 @@ def process_element(element):
   if not is_course_id_good(course_id):
     return None
   # "coursera-course-listing-more coursera-course-my-listing-more"
-  university = Institution()
   try:
     div_that_has_university_info = elements_l1[3]
     inner_a = div_that_has_university_info.getchildren()[0]
     print 'university_class_node.text', inner_a.text
-    university.name = inner_a.text
   except IndexError:
     pass
   course = Course()
   course.course_id = course_id
   course.title = a.text
-  course.university = university 
   return course
-
 
 def test5():
   courses = []
@@ -150,26 +138,11 @@ def test5():
       course_obj = process_element(element)
       if course_obj != None:
         courses.append(course_obj)
-      #sys.exit(0)
+      sys.exit(0)
 
-  grabber = CourseraRootCourseGrabber()
-  grabber.restart_items_by_reading_htmlwebroot_source()
-  for course_id in grabber.unique_course_id_dict.keys():
-    msg = '%s seq = %s' %(course_id, grabber.unique_course_id_dict[course_id].course_n_seq)
-    logging.info(msg)
-
-  logging.info('**********************************')
-  
   for i, course_obj in enumerate(courses):
-    if course_obj.course_id in grabber.unique_course_id_dict.keys():
-      course_there = grabber.unique_course_id_dict[course_obj.course_id]
-      course_obj.course_n_seq = course_there.course_n_seq
-      msg = '****EQUAL **** %s :: seq = %s' %(course_obj.course_id, course_there.course_n_seq) 
-      logging.info(msg)
     print i, course_obj.course_id
-    logging.info(course_obj.course_id)
-    print 'title', course_obj.title
-    print 'nseq', course_obj.course_n_seq
+    print course_obj.title
 
 def test6():
   xhtml = etree.fromstring(htmltrunk)
@@ -180,4 +153,3 @@ def test6():
 if __name__ == '__main__':
   test5()
   pass
-

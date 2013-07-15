@@ -6,17 +6,12 @@ Created on 27/06/2013
 @author: friend
 '''
 
-import os, re #, time
+import os, re #, os, time
 
 #from coursera_grabber_functions import either_filename_or_default 
 from coursera_grabber_functions import either_filename_or_default
 from coursera_grabber_functions import get_filename_param_or_default
 from coursera_mod import CourseraCourse
-
-
-class CourseraItemsReadSourceUnknown(ValueError):
-  pass
-import os
 
 this_file_path = os.path.abspath(__file__)
 THIS_DIR_PATH, filename = os.path.split(this_file_path)
@@ -26,6 +21,9 @@ except IndexError:
   PARENT_DIR_PATH = THIS_DIR_PATH
 
 import local_settings as ls
+
+class CourseraItemsReadSourceUnknown(ValueError):
+  pass
 
 class CourseraRootCourseGrabber(object):
 
@@ -63,9 +61,8 @@ class CourseraRootCourseGrabber(object):
     self.empty_items()
     self.fill_in_items_by_read_source(self.COURSERA_COURSES_IN_STOCKED_TXT, filename = course_items_source_txt_filename) 
 
-  def restart_items_by_reading_htmlwebroot_source(self, course_items_source_htmlwebroot_filename):
-    if not os.path.isfile(course_items_source_htmlwebroot_filename):
-      raise CourseraItemsReadSourceUnknown, 'file %s does not exist.' %(course_items_source_htmlwebroot_filename)
+  def restart_items_by_reading_htmlwebroot_source(self, course_items_source_htmlwebroot_filename=None):
+    course_items_source_htmlwebroot_filename = self.return_course_items_source_htmlwebroot_filename_or_default_or_raise(course_items_source_htmlwebroot_filename)
     self.empty_items()
     self.fill_in_items_by_read_source(self.COURSERA_COURSES_IN_WEBROOT_HTML, filename = course_items_source_htmlwebroot_filename) 
   
@@ -103,11 +100,24 @@ class CourseraRootCourseGrabber(object):
 
     raise CourseraItemsReadSourceUnknown, 'CourseraItemsReadSourceUnknown'
 
-  def read_and_stock_dict_course_items_from_webroot_source(self, course_items_source_html_filename):
+  def return_course_items_source_htmlwebroot_filename_or_default_or_raise(self, course_items_source_htmlwebroot_filename=None):
+    '''
+    Private method that returns 
+     course_items_source_htmlwebroot_filename or its default
+     or raise an exception if neither file nor default exists
+    '''
+    if course_items_source_htmlwebroot_filename == None:
+      course_items_source_htmlwebroot_filename = ls.get_default_coursera_stocked_root_webpage_osfilepath()
+    if not os.path.isfile(course_items_source_htmlwebroot_filename):
+      raise CourseraItemsReadSourceUnknown, 'file %s does not exist.' %(course_items_source_htmlwebroot_filename)
+    return course_items_source_htmlwebroot_filename
+  
+  def read_and_stock_dict_course_items_from_webroot_source(self, course_items_source_htmlwebroot_filename=None):
     '''
     1st read option: Course items are withdrawn from HTML Webroot file source
     '''
-    text = open(course_items_source_html_filename).read()
+    course_items_source_htmlwebroot_filename = self.return_course_items_source_htmlwebroot_filename_or_default_or_raise(course_items_source_htmlwebroot_filename)
+    text = open(course_items_source_htmlwebroot_filename).read()
     re_find_obj = self.re_compiled_text_to_find.finditer(text)
     for each_re_found in re_find_obj:
       course_id    = each_re_found.group(1)

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+  <!-- % course = object % -->
+  <h2> {{ course }}</h2>
+  <ul>
+    <p> Professor:  <a href="/ttc/instructors/{{ course.instructor.id }}/">{{ course.instructor }}</a>  
+      ( <a href="/ttc/institutions/{{ course.instructor.institution.id }}/"> {{ course.instructor.institution }}</a> )</p>
+      {% if course.ttc_cid %}
+        ( <a href="http://www.thegreatcourses.com/tgc/courses/course_detail.aspx?cid={{ course.ttc_cid }}">TTC's course nº {{ course.ttc_cid }} webpage</a> )
+      {% endif  %}
+    <p>
+      {% for knowledge_area in course.knowledge_area.get_up_tree_knowledge_areas %}
+        <a href="/ttc/knowledgeareas/{{ knowledge_area.id }}/courses/">{{ knowledge_area.name }}</a>
+          {% if forloop.counter < course.knowledge_area.get_up_tree_knowledge_areas|length %}
+           -> 
+          {% endif %} 
+      {% endfor %}
+    </p>
+  </ul>
+  
+  <p>{{ course.get_str_abspath }}</p>
+
+  <p> {{ course.get_n_of_lectures }} Lectures:</p>
+  {% for lecture in course.get_lectures %}
+    <ul>
+    <li><a href="/ttc/courses/{{ course.id }}/lectures/{{ lecture.id }}">{{ lecture }}</a></li>
+      <p>
+        {{ lecture.get_description }}
+      </p>
+    </ul>
+  {% endfor %}
+  {% if course.instructor.get_courses_total > 1 %}
+    <p>Other course(s) by {{ course.instructor }}:</p>
+    {% for other_course in course.get_other_courses_by_the_main_instructor %}
+      <li><a href="/ttc/courses/{{ other_course.id }}/">{{ other_course }}</a></li>
+    {% endfor %}
+  {% endif  %}
+  <p><a href="/ttc/courses/">All Courses</a></p>
+{% endblock %}

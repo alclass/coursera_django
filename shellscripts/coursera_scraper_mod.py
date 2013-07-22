@@ -13,7 +13,7 @@ logging.basicConfig(filename=LOG_FILENAME,level=logging.INFO)
 
 from coursera_grabber_mod import CourseraRootCourseGrabber
 
-import os #, sys
+import os, sys
 this_file_path = os.path.abspath(__file__)
 THIS_DIR_PATH, filename = os.path.split(this_file_path)
 try:
@@ -21,6 +21,7 @@ try:
 except IndexError:
   PARENT_DIR_PATH = THIS_DIR_PATH
 
+sys.path.append(PARENT_DIR_PATH)
 import local_settings as ls
 
 

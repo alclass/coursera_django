@@ -6,21 +6,13 @@ Created on 27/06/2013
 @author: friend
 '''
 
-# import defaults
 import os, sys
-from lxml import etree 
-
-this_file_path = os.path.abspath(__file__)
-THIS_DIR_PATH, filename = os.path.split(this_file_path)
-try:
-  PARENT_DIR_PATH = '/'.join(THIS_DIR_PATH.split('/')[:-1])
-except IndexError:
-  PARENT_DIR_PATH = THIS_DIR_PATH
-
-sys.path.append(PARENT_DIR_PATH)
+import __init__
+# import defaults
 import local_settings as ls
+import xml.etree.ElementTree as ET
 
-os.environ['DJANGO_SETTINGS_MODULE'] = 'coursera_django.settings' # 'PBCodeInspectorStats.settings'
+#os.environ['DJANGO_SETTINGS_MODULE'] = 'coursera_django.settings' # 'PBCodeInspectorStats.settings'
 #import coursera_django.settings as settings
 # from coursera_app.models import Course #, Institution  
 
@@ -66,20 +58,24 @@ class CourseWithFolder(object):
  
 class CourseRepo(object):
   
-  COURSERA_COURSES_XML_DATA_FILENAME = 'coursera_courses_folder_names.xml'
-  COURSES_BASE_DIR_ON_EXTERNAL_DISK = '/media/SAMSUNG/coursera.org/'
   
   def __init__(self):
+    self.init_constants()
     self.original_executing_dir_abspath = os.path.abspath('.')
     self.course_dict = None
     self.course_tuple_list = None
+
+  def init_constants(self):
+    self.COURSERA_COURSES_XML_DATA_FILENAME = 'coursera_courses_folder_names.xml'
+    self.COURSES_BASE_DIR_ON_EXTERNAL_DISK_ABSPATH = ls.get_coursera_external_disk_rootdir_abspath()
+
     
   def form_coursera_courses_xml_data_filename_abspath(self):
-    abspath = os.path.join(ls.COURSERA_DJANGO_DATADIR, self.COURSERA_COURSES_XML_DATA_FILENAME)
+    abspath = os.path.join(ls.get_coursera_app_data_dir_ospath(), self.COURSERA_COURSES_XML_DATA_FILENAME)
     return abspath 
 
   def listdir_and_save_course_foldernames(self):
-    os.chdir(self.COURSES_BASE_DIR_ON_EXTERNAL_DISK)
+    os.chdir(self.get_external_disk_base_dir_abspath())
     contents = os.listdir('.')
     self.course_dict = {}
     for content in contents:
@@ -102,12 +98,12 @@ class CourseRepo(object):
     </course>
     </xml>
     '''
-    page = etree.Element('xml') #, encoding='utf-8')
-    doc = etree.ElementTree(page)
+    page = ET.Element('xml') #, encoding='utf-8')
+    doc = ET.ElementTree(page)
     #print 'dict', self.course_dict
     for course_id in self.course_dict.keys():
       course = self.course_dict[course_id]
-      node = etree.SubElement(page, 'course', course_id=course.course_id, course_n_seq=course.course_n_seq)
+      node = ET.SubElement(page, 'course', course_id=course.course_id, course_n_seq=course.course_n_seq)
       print 'course.folder_name', course.folder_name
       node.text = unicode(course.folder_name)  #.encode('utf-8'))
     # come back to executing dir
@@ -118,7 +114,7 @@ class CourseRepo(object):
     
     outfile = open(xml_filename,'w')
     # doc.write(sys.stdout, pretty_print=True) #, encoding=unicode)
-    doc.write(outfile, pretty_print=True) #, encoding=unicode)
+    doc.write(outfile) #, pretty_print=True) #, encoding=unicode)
 
   def recreate_dir_listing_txt_file(self):
     self.listdir_and_save_course_foldernames()
@@ -128,8 +124,8 @@ class CourseRepo(object):
       return
     self.course_dict = {}
     xml_filename = self.form_coursera_courses_xml_data_filename_abspath()
-    doctree = etree.ElementTree(file=xml_filename)
-    nodes = doctree.findall('//course')
+    doctree = ET.ElementTree(file=xml_filename)
+    nodes = doctree.findall('.//course')
     #print len(nodes)
     # counter = 0
     for node in nodes:
@@ -200,8 +196,11 @@ class CourseRepo(object):
         return
       self.go_popup_course_folder(course)
   
+  def get_external_disk_base_dir_abspath(self):
+    return self.COURSES_BASE_DIR_ON_EXTERNAL_DISK_ABSPATH
+  
   def go_popup_course_folder(self, course):
-    course_folder_abspath = os.path.join(self.COURSES_BASE_DIR_ON_EXTERNAL_DISK, course.folder_name)
+    course_folder_abspath = os.path.join(self.get_external_disk_base_dir_abspath(), course.folder_name)
     if not os.path.isdir(course_folder_abspath):
       print 'Folder', course_folder_abspath, 'does not exist or is not available now.'
       sys.exit(1)
@@ -217,10 +216,10 @@ class ProcessToFollow:
   # DO_OPEN_FOLDER_BY_PARTIAL_COURSE_ID_IF_EXISTS = 5 
 
 def decide_process_to_follow_based_on_sysargv():
-  if '--recreate' in sys.argv:
+  if 'recreate' in sys.argv:
     # Option 1
     return ProcessToFollow.DO_RECREATE_DIR_LISTING_TXT_FILE
-  elif '--show' in sys.argv:
+  elif 'show' in sys.argv:
     # Option 2
     return ProcessToFollow.DO_SHOW_DIR_LISTING_TXT_FILE
   elif len(sys.argv) > 1:

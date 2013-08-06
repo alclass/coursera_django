@@ -13,19 +13,13 @@ from coursera_grabber_functions import either_filename_or_default
 from coursera_grabber_functions import get_filename_param_or_default
 from coursera_mod import CourseraCourse
 
-this_file_path = os.path.abspath(__file__)
-THIS_DIR_PATH, filename = os.path.split(this_file_path)
-try:
-  PARENT_DIR_PATH = '/'.join(THIS_DIR_PATH.split('/')[:-1])
-except IndexError:
-  PARENT_DIR_PATH = THIS_DIR_PATH
-
+import __init__
 import local_settings as ls
 
 class CourseraItemsReadSourceUnknown(ValueError):
   pass
 
-class CourseraRootCourseGrabber(object):
+class CourseraWebRootCourseExtractor(object):
 
   re_text_to_find = 'class[.]coursera[.]org/(\w+)[-](\d+)/auth/' # auth_redirector?type=login&subtype=normallecture_id=(\w+)'
   re_compiled_text_to_find = re.compile(re_text_to_find) 
@@ -202,6 +196,10 @@ class CourseraRootCourseGrabber(object):
       fileobj.write(line + '\n')
     fileobj.close()
 
+def process():
+  extractor = CourseraWebRootCourseExtractor()
+  extractor.restart_items_by_reading_htmlwebroot_source()  
+  extractor.write_to_txtfile_current_stocked_coursera_items()        
         
 if __name__ == '__main__':
-  pass
+  process()

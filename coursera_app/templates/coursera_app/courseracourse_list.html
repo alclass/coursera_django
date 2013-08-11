@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+  <h2>Courses</h2>
+  <ul>
+    {% for course in courseracourse_list %}
+      <li>{{ forloop.counter}} <a href="/ttc/courses/{{ course.id }}/">{{ course }}</a>,
+      {% for instructor in course.instructors.all %}
+        {{ instructor.name }}, {{ instructor.get_1st_institution }} ; 
+      {% endfor %}
+      </li>
+    {% endfor %}
+  </ul>
+{% endblock %}

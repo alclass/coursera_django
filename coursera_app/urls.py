@@ -2,7 +2,7 @@ from django.conf.urls import patterns, include, url
 # old: from django.views.generic import list_detail
 from django.views.generic.list   import ListView
 
-from coursera_app.models import Course
+from coursera_app.models import CourseraCourse
 #from coursera_app import views
 
 
@@ -15,7 +15,7 @@ from coursera_app.models import Course
 #===============================================================================
 
 course_list_genviewdict = {
-  'queryset' : Course.objects.all().order_by('name')                           
+  'queryset' : CourseraCourse.objects.all().order_by('title')                           
                            }
 
 urlpatterns = patterns('',

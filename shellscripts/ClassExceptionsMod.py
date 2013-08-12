@@ -16,6 +16,14 @@ class CourserasRepoRootFolderHasNotBeenFoundOrInexists(CourseraFileOrFolderNotFo
     return CourserasRepoRootFolderHasNotBeenFoundOrInexists.error_msg %folder_name  
 
 
+class CourseraWebRootSavedPageHasNotBeenFound(CourseraFileOrFolderNotFound):
+  error_msg = "Coursera Web Root Saved Page (%s) Has Not Been Found."
+
+  @staticmethod
+  def show_error_msg(coursera_webrootpage_abspath):
+    return CourserasRepoRootFolderHasNotBeenFoundOrInexists.error_msg %coursera_webrootpage_abspath  
+
+
 def process():
   pass
 

@@ -64,7 +64,6 @@ class CourseraCourse(models.Model):
   start_date   = models.DateField()
   duration_in_weeks = models.IntegerField(default=0)
   workload_in_hours_per_week = models.IntegerField(default=0)
-  #workload_in_hours_per_day = models.IntegerField(default=0)
   n_videos     = models.IntegerField(default=0)
   instructors  = models.ManyToManyField(Instructor) #, related_name='instr+')
   institutions = models.ManyToManyField(Institution) #, related_name='insti+')
@@ -72,9 +71,16 @@ class CourseraCourse(models.Model):
   #university  = models.ForeignKey(Institution)
   
   @property
-  def workload_in_hours_per_day(self):
-    return self.workload_in_hours_per_week
-  
+  def instructor(self):
+    return self.get_1st_instructor()
+
+  @property
+  def institution(self):
+    return self.get_1st_institution()
+
+  def get_1st_instructor(self):
+    return self.instructors.all()[0]
+ 
   def get_1st_institution(self):
     return self.institutions.all()[0]
   

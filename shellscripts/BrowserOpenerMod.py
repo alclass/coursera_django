@@ -96,7 +96,7 @@ class BrowserOpener(object):
   def stock_urls_to_open_next(self):
     self.stock_urls_to_chrome_open = []
     self.courseids_to_open = []
-    tuplestextfile = os.path.join(ls.get_coursera_data_dir_ospath(), 'Coursera tuples courseid and seq.txt')
+    tuplestextfile = os.path.join(ls.get_coursera_app_data_dir_abspath(), 'Coursera tuples courseid and seq.txt')
     tuplelines = open(tuplestextfile).read()
     lines = tuplelines.split('\n')
     for line in lines:

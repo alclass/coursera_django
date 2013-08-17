@@ -11,10 +11,11 @@ import os, re #, os, time
 #from coursera_grabber_functions import either_filename_or_default 
 from coursera_grabber_functions import either_filename_or_default
 from coursera_grabber_functions import get_filename_param_or_default
-from coursera_mod import CourseraCourse
+#from coursera_mod import CourseraCourse
 
 import __init__
 import local_settings as ls
+from coursera_app.models import CourseraCourse
 
 class CourseraItemsReadSourceUnknown(ValueError):
   pass
@@ -24,7 +25,7 @@ class CourseraWebRootCourseExtractor(object):
   re_text_to_find = 'class[.]coursera[.]org/(\w+)[-](\d+)/auth/' # auth_redirector?type=login&subtype=normallecture_id=(\w+)'
   re_compiled_text_to_find = re.compile(re_text_to_find) 
 
-  DEFAULT_COURSERA_ITEMS_WEBROOT_HTML_FILENAME = ls.get_default_coursera_stocked_root_webpage_osfilepath()  
+  DEFAULT_COURSERA_ITEMS_WEBROOT_HTML_FILENAME = ls.get_default_coursera_saved_webroot_webpage_abspath()  
   DEFAULT_COURSERA_ITEMS_TXT_FILENAME          = 'Coursera Items.txt' 
   DEFAULT_COURSERA_ITEMS_JSON_FILENAME         = 'Coursera Items.json' 
 
@@ -101,7 +102,7 @@ class CourseraWebRootCourseExtractor(object):
      or raise an exception if neither file nor default exists
     '''
     if course_items_source_htmlwebroot_filename == None:
-      course_items_source_htmlwebroot_filename = ls.get_default_coursera_stocked_root_webpage_osfilepath()
+      course_items_source_htmlwebroot_filename = self.DEFAULT_COURSERA_ITEMS_WEBROOT_HTML_FILENAME
     if not os.path.isfile(course_items_source_htmlwebroot_filename):
       raise CourseraItemsReadSourceUnknown, 'file %s does not exist.' %(course_items_source_htmlwebroot_filename)
     return course_items_source_htmlwebroot_filename
@@ -123,7 +124,13 @@ class CourseraWebRootCourseExtractor(object):
         continue
       if self.unique_course_id_dict.has_key(course_id):
         continue
-      coursera_item_obj = CourseraCourse(course_id, course_n_seq)
+      try:
+        coursera_item_obj = CourseraCourse.objects.get(cid=course_id) #(course_id, course_n_seq)
+      except CourseraCourse.DoesNotExist:
+        coursera_item_obj = CourseraCourse()
+        coursera_item_obj.cid = course_id
+        coursera_item_obj.n_seq = course_n_seq
+        coursera_item_obj.save()
       self.unique_course_id_dict[course_id] = coursera_item_obj
 
   def read_and_stock_dict_course_items_from_txt_source(self, course_items_source_txt_filename):
@@ -186,19 +193,21 @@ class CourseraWebRootCourseExtractor(object):
     n_items = len(self.course_tuple_list)
     if n_items == 0:
       return
-    txt_filename = either_filename_or_default(txt_filename, self.DEFAULT_COURSERA_ITEMS_TXT_FILENAME, must_exist_locally = False)
-    print 'Writing %d lines to %s' %(n_items, txt_filename)
-    fileobj = open(txt_filename, 'w')
+    textfile_with_ids_and_nseqs_abspath = ls.get_default_textfile_with_extracted_ids_and_nseqs_from_coursera_webrootpage_abspath()
+    print 'Writing %d lines to %s' %(n_items, textfile_with_ids_and_nseqs_abspath)
+    fileobj = open(textfile_with_ids_and_nseqs_abspath, 'w')
     for tuple_item in self.course_tuple_list:
       # the 1st tuple element is course_id, the second is an object with at least attributes course_id and course_n_seq 
       course_item_obj = tuple_item[1]
-      line = '%(course_id)s,%(course_n_seq)s' %course_item_obj.get_tuple_attrs_as_dict()
+      line = '%(course_id)s,%(course_n_seq)s' %{'course_id':course_item_obj.cid, 'course_n_seq':course_item_obj.n_seq}
       fileobj.write(line + '\n')
     fileobj.close()
 
 def process():
   extractor = CourseraWebRootCourseExtractor()
+  print 'Extracting courses from webroot, please wait.' 
   extractor.restart_items_by_reading_htmlwebroot_source()  
+  print 'Writing found courses to', ls.get_default_textfile_with_extracted_ids_and_nseqs_from_coursera_webrootpage_abspath() 
   extractor.write_to_txtfile_current_stocked_coursera_items()        
         
 if __name__ == '__main__':

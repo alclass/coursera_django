@@ -3,10 +3,14 @@
   <h2>Courses</h2>
   <ul>
     {% for course in courseracourse_list %}
-      <li>{{ forloop.counter}} <a href="/ttc/courses/{{ course.id }}/">{{ course }}</a>,
-      {% for instructor in course.instructors.all %}
-        {{ instructor.name }}, {{ instructor.get_1st_institution }} ; 
-      {% endfor %}
+      <li>+ {{ forloop.counter}}
+      	<a href="{{ course.abs_url_to_lecture_index }}">{{ course }}</a>,
+        {% for instructor in course.instructors.all %}
+	      {{ instructor.name }}, {{ instructor.get_1st_institution }} ; 
+	    {% endfor %}
+	    de {{ course.start_date }} a {{ course.finish_date }}, {{ course.duration_in_weeks }},
+	    {{ course.abs_url_to_lecture_index }}
+      
       </li>
     {% endfor %}
   </ul>

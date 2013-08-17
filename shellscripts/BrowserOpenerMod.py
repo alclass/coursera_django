@@ -34,48 +34,53 @@ Created on 27/06/2013
 import os,  time
 import __init__
 import local_settings as ls
+from coursera_app.models import CourseraCourse
+#from coursera_django.defaults import LECTURE_INDEX_INTERPOLATE_URL
 
-url_base = 'https://class.coursera.org/%(course_id)s-%(course_n_seq)s/lecture/index'        
-
-class CourseraCourse(object):
+class WorkCourse(object):
 
   finished_course_ids_list = []
   
-  def __init__(self, course_id=None, course_n_seq=None):
-    self.course_id    = course_id
-    self.course_n_seq = course_n_seq
+  def __init__(self, ccourse=None, n_seq=None):
+    self.ccourse   = ccourse
     
   @staticmethod
-  def add_to_finished_course_ids_list(course):
-    if type(course) == CourseraCourse:
-      CourseraCourse.finished_course_ids_list.append(course.course_id)
+  def add_to_finished_course_ids_list(ccourse):
+    if type(ccourse) == CourseraCourse:
+      WorkCourse.finished_course_ids_list.append(ccourse.cid)
     else:
       raise TypeError, 'Method add_to_finished_course_ids_list(course) receive a non-CourseraCourse object'
 
   def __eq__(self, other_course):
-    if self.course_id == other_course.course_id and self.course_n_seq == other_course.course_n_seq:
+    if self.ccourse.cid == other_course.cid and self.ccourse.n_seq == other_course.n_seq:
       return True
     return False 
-  
-  def return_dict_course_id_and_course_n_seq(self):
-    return {'course_id':self.course_id, 'course_n_seq':self.course_n_seq}
-    
-  def form_abs_url_to_lecture_index(self):
-    return url_base %self.return_dict_course_id_and_course_n_seq() 
-    
-          
+
 class BrowserOpener(object):
 
   #COURSE_FINISHED_REGISTRY_DIR_ABSPATH = 'C:/Users/up15/Downloads/coursera/Courses Finished/'
-  COURSE_FINISHED_REGISTRY_DIR_ABSPATH = '/media/SAMSUNG_/coursera.org/aaa Triage/Courses Finished/'
-  
-  def __init__(self):
-    self.verify_course_finished_status()
-    self.stock_urls_to_open_next()
-    self.chrome_open_n_at_a_time()
+
+
+  def __init__(self, registry_folder_with_finished_courses_abspath=None):
+    self.cid_and_n_seq_dict_from_courseras_webrootpage = {}
+    self.ccourses_to_open_their_lecture_index_pages_on_browser = []
+    #self.set_registry_folder_with_finished_courses_abspath(registry_folder_with_finished_courses_abspath)
+    #self.verify_course_finished_status()
+    self.fill_in_cid_and_n_seq_dict_from_courseras_webrootpage()
+    self.confirm_ccourses_that_are_apt_for_lecture_index_pages_opening_on_browser()
+    #self.chrome_open_n_at_a_time()
     
+  def set_registry_folder_with_finished_courses_abspath(self, registry_folder_with_finished_courses_abspath=None):
+    if registry_folder_with_finished_courses_abspath == None:
+      self.registry_folder_with_finished_courses_abspath = ls.COURSE_FINISHED_REGISTRY_DIR_ABSPATH
+      return
+    self.registry_folder_with_finished_courses_abspath = registry_folder_with_finished_courses_abspath    
+
   def verify_course_finished_status(self):
-    os.chdir(self.COURSE_FINISHED_REGISTRY_DIR_ABSPATH)
+    '''
+    @deprecated: this method will be removed
+    '''
+    os.chdir(self.registry_folder_with_finished_courses_abspath)
     contents = os.listdir('.')
     for filename in contents:
       #print 'finished folder', filename
@@ -86,17 +91,22 @@ class BrowserOpener(object):
           pp = id_and_n_seq.split('-')
           course_n_seq = pp[-1]
           course_id = '-'.join(pp[:-1])
-          course = CourseraCourse(course_id, course_n_seq)
-          CourseraCourse.add_to_finished_course_ids_list(course)
+          ccourse = CourseraCourse(course_id, course_n_seq)
+          wcourse = WorkCourse(ccourse)
+          WorkCourse.add_to_finished_course_ids_list(wcourse)
         except IndexError:
           continue
-    print 'Courses Finished', CourseraCourse.finished_course_ids_list 
-    print 'Total', len(CourseraCourse.finished_course_ids_list)
+    print 'Courses Finished', WorkCourse.finished_course_ids_list
+    print 'Total', len(WorkCourse.finished_course_ids_list)
 
-  def stock_urls_to_open_next(self):
-    self.stock_urls_to_chrome_open = []
-    self.courseids_to_open = []
-    tuplestextfile = os.path.join(ls.get_coursera_app_data_dir_abspath(), 'Coursera tuples courseid and seq.txt')
+  def fill_in_cid_and_n_seq_dict_from_courseras_webrootpage(self):
+    '''
+    The url-stock comes directly from a text file.
+    This text file, in turn, is produced by CourseraWebRootPageScraperMod.py
+      ie, they are the courses listed in Coursera's Web Root Course Index Page
+    '''
+    # tuplestextfile = os.path.join(ls.get_coursera_app_data_dir_abspath(), 'Coursera tuples courseid and seq.txt')
+    tuplestextfile = ls.get_default_textfile_with_extracted_ids_and_nseqs_from_coursera_webrootpage_abspath()
     tuplelines = open(tuplestextfile).read()
     lines = tuplelines.split('\n')
     for line in lines:
@@ -105,40 +115,82 @@ class BrowserOpener(object):
       try:
         pp = line.split(',')
         course_id = pp[0]
-        if course_id in CourseraCourse.finished_course_ids_list:
+        if course_id in WorkCourse.finished_course_ids_list:
           print 'Course_id', course_id, 'is finished. Continuing next.'
           continue
-        if course_id in self.courseids_to_open:
+        n_seq = int(pp[1])
+        if n_seq == 0:
           continue
-        ccourse = CourseraCourse()
-        ccourse.course_id = course_id
-        try:
-          int(pp[1])
-        except ValueError:
-          continue
-        ccourse.course_n_seq = pp[1]
       except IndexError:
         continue
-      self.courseids_to_open.append(ccourse.course_id)
-      url = ccourse.form_abs_url_to_lecture_index()
-      self.stock_urls_to_chrome_open.append(url)
+      except ValueError:
+        continue
+      self.cid_and_n_seq_dict_from_courseras_webrootpage[course_id]=n_seq
+    print "Total courses found at coursera's webrootpage:", len(self.cid_and_n_seq_dict_from_courseras_webrootpage) 
+
+  def get_course_or_create_it_or_None(self, cid, n_seq):
+    if n_seq == 0:
+      return None
+    try:
+      ccourse = CourseraCourse.objects.get(cid=cid)
+    except CourseraCourse.DoesNotExist:
+      ccourse = CourseraCourse()
+      ccourse.cid = cid
+      ccourse.n_seq = n_seq
+      ccourse.save()
+      return ccourse
+    if ccourse.n_seq == -1:
+      ccourse.n_seq = n_seq
+    if ccourse.n_seq != n_seq:
+      return None
+    return ccourse
+
+  def confirm_ccourses_that_are_apt_for_lecture_index_pages_opening_on_browser(self):
+    '''
+    '''
+    ndays = 17
+    for cid in self.cid_and_n_seq_dict_from_courseras_webrootpage.keys():
+      n_seq = self.cid_and_n_seq_dict_from_courseras_webrootpage[cid]
+      #print 'Confirm or not', cid, n_seq,
+      ccourse = self.get_course_or_create_it_or_None(cid, n_seq)
+      if ccourse == None:
+        continue
+      #print 'ccourse.finish_date', ccourse.finish_date,
+      if ccourse.is_course_finish_date_older_than(ndays):
+        # print 'Older than 17 days, not confirming it.'
+        continue
+      #print 'Not older than 17 days, confirming it now.'
+      self.ccourses_to_open_their_lecture_index_pages_on_browser.append(ccourse)
+    print 'There are %d courses to open their lecture/index pages.' %len(self.ccourses_to_open_their_lecture_index_pages_on_browser)
+    for i, ccourse in enumerate(self.ccourses_to_open_their_lecture_index_pages_on_browser):
+      try:
+        title = unicode(ccourse)
+      except UnicodeEncodeError:
+        title = ccourse.title.encode('utf-8')
+      print i+1, ccourse.cid, title  
 
   def chrome_open_n_at_a_time(self, n_to_open_at_a_time = 7):
     '''
     '''
     #os.chdir('C:/Program Files (x86)/Google/Chrome/Application/')
-    total = len(self.stock_urls_to_chrome_open)
-    for counter, url in enumerate(self.stock_urls_to_chrome_open):
+    total = len(self.ccourses_to_open_their_lecture_index_pages_on_browser)
+    for counter, ccourse in enumerate(self.ccourses_to_open_their_lecture_index_pages_on_browser):
       #comm = 'chrome.exe "%s"' %url
+      url = ccourse.form_abs_url_to_lecture_index()
       comm = 'chromium "%s"' %url
       print counter+1, 'of', total, url
       print comm
       os.system(comm)
       print 'Waiting 10 seconds until next browser-page-opening.'
       time.sleep(10)
+      '''
       if (counter + 1) % n_to_open_at_a_time == 0:
         ans = raw_input(' Press [ENTER] to continue. ')
-        ans
+        ans'''
+
+def process():
+  browser_opener = BrowserOpener()
+  browser_opener.chrome_open_n_at_a_time()
 
 if __name__ == '__main__':
-  BrowserOpener()
+  process()

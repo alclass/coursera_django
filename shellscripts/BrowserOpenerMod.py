@@ -8,7 +8,7 @@ What does it do?
 The BrowserOpener class does the following:
 1) look up all courses that have already finished and form a list with them;
 2) look up all courses that are listed on Coursera's Web Root Index;
-   For the time being, this page is save from Firefox with the "Select-All" plus "View Source" help.
+   For the time being, this page is saved from Firefox with the "Select-All" plus "View Source" help.
    This is because the Web Root Index is Ajax, ie, it brings courses as the user moves down the page.
 3) Having these 2 lists, ie, the "Finished Courses" plus the "Current Listed Courses", it subtracts the former
    from the latter and the result is a list of courses that will be opened in a browsers.
@@ -17,7 +17,7 @@ The BrowserOpener class does the following:
 
 5) The script issues each Course's lecture/index page, one at a time, counting 10 seconds in-between from each one, and 
    stopping when N pages have been issued, to wait for the user to hit [ENTER] to continue to the next N pages.
-   
+
    N is default to 7, ie, at each 7 pages, the program will wait the user's action to continue.
 
 ===============
@@ -34,6 +34,7 @@ Created on 27/06/2013
 import os,  time
 import __init__
 import local_settings as ls
+import defaults
 from coursera_app.models import CourseraCourse
 #from coursera_django.defaults import LECTURE_INDEX_INTERPOLATE_URL
 
@@ -55,6 +56,7 @@ class WorkCourse(object):
     if self.ccourse.cid == other_course.cid and self.ccourse.n_seq == other_course.n_seq:
       return True
     return False 
+
 
 class BrowserOpener(object):
 
@@ -181,8 +183,8 @@ class BrowserOpener(object):
       print counter+1, 'of', total, url
       print comm
       os.system(comm)
-      print 'Waiting 10 seconds until next browser-page-opening.'
-      time.sleep(10)
+      print 'Waiting %d seconds until next browser-page-opening.' %defaults.WAIT_TIME_IN_BETWEEN_PAGE_OPENING
+      time.sleep(defaults.WAIT_TIME_IN_BETWEEN_PAGE_OPENING)
       '''
       if (counter + 1) % n_to_open_at_a_time == 0:
         ans = raw_input(' Press [ENTER] to continue. ')

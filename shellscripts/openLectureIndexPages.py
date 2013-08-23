@@ -6,12 +6,12 @@ Created on 29/06/2013
 @author: friend
 '''
 import sys, time
-from coursera_grabber_mod import CourseraRootCourseGrabber
+from CourseraWebRootCourseExtractorMod import CourseraWebRootCourseExtractor
 
 class LectureIndexOpener(object):
 
   def __init__(self):
-    self.grabber = CourseraRootCourseGrabber()
+    self.grabber = CourseraWebRootCourseExtractor()
     
   def openLectureIndexPagesByTxtCourseraItemsSourceFromSysArg(self):
     txt_filename = sys.argv[1]

@@ -1,6 +1,25 @@
 #!/usr/bin/env python
 #-*-coding:utf-8-*-
 '''
+
+This module contains 2 classes:
+
++ class VideoLinkPageScraper
++ class VideoLinkScraperDispatcher
+
+
+The basic idea here is to scrape local saved files that have prefix 'videolinks_'
+  
+These prefixed html files have links to video lectures which have an "unview" value in a html-class attribute
+  (see code for better understanding)
+
+As the 2 classes are concerned:
+  + class VideoLinkScraperDispatcher organizes the html-files fetching
+  + whereas class VideoLinkPageScraper scrapes the video lecture download url's
+
+These links are autoinvoked via chromium and downloads are timespaced by 2 min
+  (or other default if it has been changed, see code for that)
+
 Created on 27/06/2013
 
 @author: friend
@@ -31,7 +50,7 @@ class VideoLinkPageScraper(object):
   def init_xhtml_lecture_index_page_abspath(self, xhtml_lecture_index_page_abspath=None):
     self.xhtml_lecture_index_page_abspath = xhtml_lecture_index_page_abspath
     if self.xhtml_lecture_index_page_abspath == None or not os.path.isfile(self.xhtml_lecture_index_page_abspath):
-      raise CourseraLectureIndexPageHasNotBeenFound, CourseraLectureIndexPageHasNotBeenFound.show_error_msg()
+      raise CourseraLectureIndexPageHasNotBeenFound, CourseraLectureIndexPageHasNotBeenFound.show_error_msg(CourseraLectureIndexPageHasNotBeenFound)
 
   def scrape_video_link_page(self):
     '''
@@ -119,10 +138,14 @@ class VideoLinkScraperDispatcher(object):
     for i, filename in enumerate(self.videolinks_xhtml_filenames):
       print 'Processing', i+1,'/', total, filename
       lecture_index_page_xhtml_abspath = self.get_lecture_index_page_xhtml_abspath(filename)
-      scraper = VideoLinkPageScraper(lecture_index_page_xhtml_abspath)
-      n_downloads += scraper.download_videos()
-      print 'Total n_downloads', n_downloads
-  
+      try:
+        scraper = VideoLinkPageScraper(lecture_index_page_xhtml_abspath)
+        n_downloads += scraper.download_videos()
+        print 'Total n_downloads', n_downloads
+      except CourseraLectureIndexPageHasNotBeenFound:
+        # when an opportunity opens, this exception raising must be scheduled for tests/unittest
+        continue
+
   
 def process():
   dispatcher = VideoLinkScraperDispatcher()

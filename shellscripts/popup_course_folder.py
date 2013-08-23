@@ -71,7 +71,7 @@ class CourseRepo(object):
 
     
   def form_coursera_courses_xml_data_filename_abspath(self):
-    abspath = os.path.join(ls.get_coursera_app_data_dir_ospath(), self.COURSERA_COURSES_XML_DATA_FILENAME)
+    abspath = os.path.join(ls.get_coursera_app_data_dir_abspath(), self.COURSERA_COURSES_XML_DATA_FILENAME)
     return abspath 
 
   def listdir_and_save_course_foldernames(self):
